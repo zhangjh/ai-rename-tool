@@ -69,8 +69,8 @@ AI识别后: 2025-08-04_product_dashboard_interface.png
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-username/ai-image-renamer.git
-cd ai-image-renamer
+git clone https://github.com/zhangjh/ai-rename-tool.git
+cd ai-rename-tool
 
 # 2. 安装依赖
 npm install
