@@ -1,8 +1,8 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
-import { statSync, readFileSync } from 'fs';
-import path from 'path';
+const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
+const { statSync, readFileSync } = require('fs');
+const path = require('path');
 
-export class ImageAnalyzer {
+class ImageAnalyzer {
   constructor(config = {}) {
     // Get config from parameters or environment variables with defaults
     const fullConfig = {
@@ -105,39 +105,29 @@ export class ImageAnalyzer {
       } catch (error) {
         console.log('LLM analysis failed:', error.message);
         
-        // Provide more detailed error information for debugging
-        if (error.message.includes('API_KEY')) {
-          console.log('Invalid API key. Please check your Gemini API key configuration.');
-        } else if (error.message.includes('rate limit') || error.message.includes('rate_limit')) {
-          console.log('Rate limit reached. Consider reducing the number of images processed at once.');
-        } else if (error.message.includes('QUOTA') || error.message.includes('quota')) {
+        // Handle specific error types
+        if (error.message.includes('quota')) {
           console.log('API quota exceeded. Please check your usage limits.');
         } else if (error.message.includes('model') || error.message.includes('404')) {
           console.log('Model not found or not available. Please check your model name.');
-          console.log('Available models: gemini-1.5-flash, gemini-1.5-pro, gemini-1.0-pro');
         } else if (error.message.includes('permission')) {
           console.log('Permission denied. Check your API key permissions.');
-        } else if (error.message.includes('fetch failed')) {
-          console.log('Network error. Check your internet connection.');
-        } else if (error.message.includes('API Error')) {
-          console.log('API responded with error:', error.message);
-          if (error.message.includes('403')) {
-            console.log('Access denied. The API key may not have access to this model or vision capabilities.');
-            console.log('Try using a different model or check your API key permissions.');
-          }
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          console.log('Network error. Please check your internet connection.');
+        } else {
+          console.log('API error:', error.message);
         }
         
         return this.generateFallbackName(imagePath);
       }
     } catch (error) {
-      console.log('LLM analysis failed:', error.message);
+      console.log('Image processing failed:', error.message);
       return this.generateFallbackName(imagePath);
     }
   }
 
   async getImageMetadata(imagePath) {
     try {
-      // Get basic metadata without Jimp
       const stats = statSync(imagePath);
       const ext = path.extname(imagePath).toLowerCase();
       let mimeType = 'image/jpeg';
@@ -159,10 +149,10 @@ export class ImageAnalyzer {
           mimeType = 'image/webp';
           break;
       }
-      
+
       return {
-        width: 0, // Cannot determine without image processing
-        height: 0, // Cannot determine without image processing
+        width: 0, // 无法确定
+        height: 0, // 无法确定
         format: ext,
         mime: mimeType,
         size: stats.size,
@@ -214,7 +204,9 @@ export class ImageAnalyzer {
   }
 
   async extractTextFromImageWithFallback(imagePath) {
-    // Now this method will use LLM instead of OCR
+    // 使用离线规则分析
     return await this.analyzeImageWithLLM(imagePath);
   }
 }
+
+module.exports = { ImageAnalyzer };

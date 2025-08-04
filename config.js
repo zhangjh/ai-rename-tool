@@ -1,4 +1,4 @@
-export const aiConfig = {
+const aiConfig = {
   // API Configuration
 
   apiKey: "sk-proj-1234567890",
@@ -53,4 +53,4 @@ export const aiConfig = {
   }
 };
 
-export default aiConfig;
+module.exports = aiConfig;

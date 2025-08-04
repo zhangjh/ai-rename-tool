@@ -1,9 +1,9 @@
-import fs from 'fs/promises';
-import path from 'path';
-import chalk from 'chalk';
-import { ImageAnalyzer } from './image-analyzer.js';
+const fs = require('fs/promises');
+const path = require('path');
+const chalk = require('chalk');
+const { ImageAnalyzer } = require('./image-analyzer.js');
 
-export class FileRenamer {
+class FileRenamer {
   constructor(config = {}) {
     this.analyzer = new ImageAnalyzer(config);
   }
@@ -102,15 +102,15 @@ export class FileRenamer {
     
     return {
       successful: successfulRenames,
-      failed: failedRenames
+      failed: failedRenames,
+      total: results.length
     };
   }
 
   async renameSingleFile(filePath, newName) {
-    const dir = path.dirname(filePath);
-    const newPath = path.join(dir, newName);
-    
     try {
+      const dir = path.dirname(filePath);
+      const newPath = path.join(dir, newName);
       await fs.rename(filePath, newPath);
       return { success: true, newPath };
     } catch (error) {
@@ -118,3 +118,5 @@ export class FileRenamer {
     }
   }
 }
+
+module.exports = { FileRenamer };

@@ -2,24 +2,56 @@
   "name": "image-rename-tool",
   "version": "1.0.0",
   "description": "Rename image files based on their content using LLM analysis",
-  "main": "index.js",
-  "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "electron": "electron .",
+    "electron-dev": "electron . --dev",
+    "build": "electron-builder",
+    "dist": "npm run build"
   },
   "keywords": [
     "image",
     "rename",
     "llm",
-    "content-analysis"
+    "content-analysis",
+    "electron",
+    "desktop"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "chalk": "^5.3.0",
+    "chalk": "^4.1.2",
     "commander": "^12.0.0",
     "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.imagerenametool.app",
+    "productName": "Image Rename Tool",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "web-interface/**/*",
+      "*.js",
+      "config.js",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }
