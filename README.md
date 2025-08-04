@@ -6,6 +6,7 @@
 
 - 🔍 **AI 图像分析**：使用 Google Gemini AI 分析图像内容并生成描述性文件名
 - 📁 **批量重命名**：支持批量处理整个目录的图像文件
+- 📅 **日期前缀**：自动添加 YYYY-MM-DD 格式的日期前缀到文件名
 - 👀 **预览模式**：在重命名前预览将要进行的更改
 - 🛡️ **安全模式**：支持 dry-run 模式，不会实际修改文件
 - 📊 **详细报告**：提供处理结果和错误信息
@@ -117,6 +118,20 @@ Application Blocked - FortiGate Application Control
 3. **清理规则**：移除特殊字符，统一格式
 4. **时间戳回退**：如果无法生成有意义的名称，使用时间戳
 
+## 文件名格式
+
+### 日期前缀格式
+所有重命名的文件都会自动添加日期前缀，格式为：`YYYY-MM-DD_描述性名称.扩展名`
+
+**示例：**
+- `2025-08-04_cat_on_windowsill.jpg`
+- `2025-08-04_workflow_diagram.png`
+- `2025-08-04_image_20250804053439.webp` (回退名称)
+
+### 日期来源
+- **AI 分析成功**：使用当前日期作为前缀
+- **回退模式**：使用文件的修改时间作为前缀
+
 ## 支持的文件格式
 
 - JPEG (.jpg, .jpeg)
@@ -137,6 +152,18 @@ node index.js rename test_images
 # 使用在线 AI 分析（需要网络访问）
 node index.js preview test_images
 ```
+
+### 重命名结果示例
+
+**原始文件名：**
+- `IMG_001.jpg`
+- `screenshot.png`
+- `workflow_diagram.webp`
+
+**重命名后：**
+- `2025-08-04_cat_sitting_on_windowsill.jpg`
+- `2025-08-04_computer_screen_with_text.png`
+- `2025-08-04_business_process_workflow.webp`
 
 ## 注意事项
 

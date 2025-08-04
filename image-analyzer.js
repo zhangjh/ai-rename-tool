@@ -94,7 +94,14 @@ export class ImageAnalyzer {
         const cleanName = this.cleanFilename(suggestedName);
         console.log('Cleaned name:', cleanName);
         
-        return cleanName || this.generateFallbackName(imagePath);
+        // 获取当前日期作为前缀
+        const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        
+        if (cleanName) {
+          return `${date}_${cleanName}`;
+        } else {
+          return this.generateFallbackName(imagePath);
+        }
       } catch (error) {
         console.log('LLM analysis failed:', error.message);
         
@@ -169,8 +176,9 @@ export class ImageAnalyzer {
 
   generateFallbackName(imagePath) {
     const stats = statSync(imagePath);
+    const date = new Date(stats.mtime).toISOString().slice(0, 10); // YYYY-MM-DD
     const timestamp = new Date(stats.mtime).toISOString().slice(0, 19).replace(/[-:T]/g, '');
-    return `image_${timestamp}`;
+    return `${date}_image_${timestamp}`;
   }
 
   cleanFilename(name) {
@@ -187,7 +195,17 @@ export class ImageAnalyzer {
     if (!text) {
       return this.generateFallbackName('dummy');
     }
-    return text;
+    
+    // 获取当前日期作为前缀
+    const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    
+    // 如果文本已经包含日期前缀，直接返回
+    if (text.match(/^\d{4}-\d{2}-\d{2}_/)) {
+      return text;
+    }
+    
+    // 添加日期前缀
+    return `${date}_${text}`;
   }
 
   isImageFile(filename) {
