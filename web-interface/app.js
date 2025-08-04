@@ -10,7 +10,8 @@ const selectFolderBtn = document.getElementById('selectFolderBtn');
 const apiKeyInput = document.getElementById('apiKey');
 const modelNameSelect = document.getElementById('modelName');
 const languageSelect = document.getElementById('language');
-// 移除离线模式选择器
+const offlineModeSelect = document.getElementById('offlineMode');
+const passwordToggle = document.getElementById('passwordToggle');
 const previewSection = document.getElementById('previewSection');
 const previewBtn = document.getElementById('previewBtn');
 const previewLoading = document.getElementById('previewLoading');
@@ -27,12 +28,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 加载配置
   const config = await window.electronAPI.getConfig();
   apiKeyInput.value = config.apiKey || '';
-  modelNameSelect.value = config.modelName || 'gemini-1.5-flash';
+  modelNameSelect.value = config.modelName || 'glm-4v-flash';
   languageSelect.value = config.language || 'zh';
-  // 移除离线模式配置
+  offlineModeSelect.value = config.offlineMode || 'false';
   
   // 绑定事件
   bindEvents();
+  
+  // 初始化离线模式状态
+  updateOfflineModeUI();
 });
 
 // 绑定事件
@@ -58,16 +62,19 @@ function bindEvents() {
   
   fileInput.addEventListener('change', handleFileSelect);
   
-  // 拖拽上传
-  uploadSection.addEventListener('dragover', handleDragOver);
-  uploadSection.addEventListener('drop', handleDrop);
-  uploadSection.addEventListener('dragleave', handleDragLeave);
+  // 拖拽功能已移除
   
   // 预览按钮
   previewBtn.addEventListener('click', handlePreview);
   
   // 重命名按钮
   renameBtn.addEventListener('click', handleRename);
+  
+  // 离线模式切换
+  offlineModeSelect.addEventListener('change', updateOfflineModeUI);
+  
+  // 密钥显示/隐藏切换
+  passwordToggle.addEventListener('click', togglePasswordVisibility);
 }
 
 // 处理文件选择
@@ -106,30 +113,7 @@ async function selectDirectory() {
   }
 }
 
-// 处理拖拽
-function handleDragOver(event) {
-  event.preventDefault();
-  uploadSection.classList.add('dragover');
-}
-
-function handleDragLeave(event) {
-  event.preventDefault();
-  uploadSection.classList.remove('dragover');
-}
-
-async function handleDrop(event) {
-  event.preventDefault();
-  uploadSection.classList.remove('dragover');
-  
-  const files = Array.from(event.dataTransfer.files);
-  const imageFiles = files.filter(file => file.type.startsWith('image/'));
-  
-  if (imageFiles.length > 0) {
-    selectedFiles = imageFiles.map(file => file.path);
-    showPreviewSection();
-    renderFileList();
-  }
-}
+// 拖拽功能已移除
 
 // 显示预览区域
 function showPreviewSection() {
@@ -145,8 +129,22 @@ function getFileName(filePath) {
 // 获取目录路径（跨平台）
 function getDirPath(filePath) {
   const parts = filePath.split(/[/\\]/);
-  parts.pop();
-  return parts.join(process.platform === 'win32' ? '\\' : '/');
+  parts.pop(); // 移除文件名，只保留目录路径
+  
+  // 检测路径分隔符类型
+  const isWindows = filePath.includes('\\');
+  return parts.join(isWindows ? '\\' : '/');
+}
+
+// 截断路径显示
+function truncatePath(path, maxLength = 50) {
+  if (path.length <= maxLength) {
+    return path;
+  }
+  
+  // 从开头截断，保留结尾部分
+  const truncated = '...' + path.slice(-(maxLength - 3));
+  return truncated;
 }
 
 // 渲染文件列表
@@ -155,6 +153,9 @@ function renderFileList() {
   
   selectedFiles.forEach((filePath, index) => {
     const fileName = getFileName(filePath);
+    const dirPath = getDirPath(filePath);
+    const truncatedPath = truncatePath(dirPath);
+    
     const fileItem = document.createElement('div');
     fileItem.className = 'file-item';
     fileItem.innerHTML = `
@@ -162,7 +163,7 @@ function renderFileList() {
         <div class="file-icon">🖼️</div>
         <div class="file-details">
           <h4>${fileName}</h4>
-          <p title="${filePath}">${filePath}</p>
+          <p title="${dirPath}" class="file-path">${truncatedPath}</p>
         </div>
       </div>
       <div class="rename-section">
@@ -191,8 +192,8 @@ async function handlePreview() {
   }
   
   const settings = getSettings();
-  if (!settings.apiKey) {
-    showStatus('请输入 API 密钥', 'error');
+  if (!settings.offlineMode && !settings.apiKey) {
+    showStatus('请输入 API 密钥或开启离线模式', 'error');
     return;
   }
   
@@ -299,7 +300,8 @@ function getSettings() {
   return {
     apiKey: apiKeyInput.value,
     modelName: modelNameSelect.value,
-    language: languageSelect.value
+    language: languageSelect.value,
+    offlineMode: offlineModeSelect.value === 'true'
   };
 }
 
@@ -337,6 +339,28 @@ function showProgress(percent) {
 function hideProgress() {
   progressBar.classList.add('hidden');
   progressFill.style.width = '0%';
+}
+
+// 切换密钥显示/隐藏
+function togglePasswordVisibility() {
+  const isPassword = apiKeyInput.type === 'password';
+  apiKeyInput.type = isPassword ? 'text' : 'password';
+  passwordToggle.textContent = isPassword ? '🙈' : '👁️';
+}
+
+// 更新离线模式UI
+function updateOfflineModeUI() {
+  const isOffline = offlineModeSelect.value === 'true';
+  const apiKeyGroup = apiKeyInput.closest('.setting-group');
+  const apiKeyLabel = apiKeyGroup.querySelector('label');
+  
+  if (isOffline) {
+    apiKeyLabel.textContent = 'API 密钥 (可选)';
+    apiKeyInput.placeholder = '离线模式下可选';
+  } else {
+    apiKeyLabel.textContent = 'API 密钥';
+    apiKeyInput.placeholder = '输入您的 Gemini API 密钥';
+  }
 }
 
 // 重置应用

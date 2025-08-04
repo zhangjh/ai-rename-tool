@@ -57,15 +57,9 @@
             transition: all 0.3s ease;
         }
 
-        .upload-section:hover {
-            border-color: #3498db;
-            background: #f8f9fa;
-        }
 
-        .upload-section.dragover {
-            border-color: #3498db;
-            background: #e3f2fd;
-        }
+
+
 
         .upload-icon {
             font-size: 3em;
@@ -101,7 +95,7 @@
 
         .settings-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
 
@@ -127,6 +121,49 @@
         .setting-group input:focus, .setting-group select:focus {
             outline: none;
             border-color: #3498db;
+        }
+
+        .setting-group .help-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .setting-group .help-text a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .setting-group .help-text a:hover {
+            text-decoration: underline;
+        }
+
+        .password-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .password-input-container input {
+            padding-right: 40px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #666;
+            user-select: none;
+        }
+
+        .password-toggle:hover {
+            color: #333;
         }
 
         .preview-section {
@@ -171,7 +208,7 @@
 
         .file-item {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             padding: 15px;
             border-bottom: 1px solid #eee;
             transition: background 0.3s ease;
@@ -190,7 +227,9 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            min-width: 300px;
+            width: 320px;
+            flex-shrink: 0;
+            min-height: 80px;
         }
 
         .file-icon {
@@ -198,14 +237,33 @@
             color: #3498db;
         }
 
-        .file-details h4 {
-            margin-bottom: 5px;
-            color: #333;
+        .file-details {
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 60px;
         }
 
-        .file-details p {
+        .file-details h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+            font-size: 1em;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-details .file-path {
             color: #666;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: monospace;
         }
 
         .file-preview {
@@ -219,6 +277,9 @@
         .rename-section {
             flex: 1;
             min-width: 500px;
+            display: flex;
+            align-items: center;
+            min-height: 80px;
         }
 
         .name-comparison {
@@ -229,13 +290,18 @@
             background: #f8f9fa;
             border-radius: 8px;
             border: 1px solid #e9ecef;
-            align-items: start;
+            align-items: center;
+            width: 100%;
+            min-height: 50px;
         }
 
         .original-name, .new-name {
             display: flex;
             flex-direction: column;
             gap: 8px;
+            min-width: 0; /* 允许内容收缩 */
+            min-height: 50px;
+            justify-content: center;
         }
 
         .original-name label, .new-name label {
@@ -243,6 +309,7 @@
             color: #666;
             font-weight: 600;
             margin-bottom: 0;
+            white-space: nowrap;
         }
 
         .name-text {
@@ -254,8 +321,12 @@
             color: #333;
             word-break: break-all;
             min-height: 38px;
+            max-height: 76px; /* 限制最大高度为两行 */
             display: flex;
             align-items: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
         }
 
         .arrow {
@@ -263,8 +334,10 @@
             color: #3498db;
             font-weight: bold;
             text-align: center;
-            align-self: center;
-            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 50px;
         }
 
         .rename-input {
@@ -274,7 +347,12 @@
             font-size: 0.9em;
             width: 100%;
             min-height: 38px;
+            max-height: 76px; /* 与name-text保持一致 */
             box-sizing: border-box;
+            resize: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
         }
 
         .rename-input:focus {
@@ -442,6 +520,15 @@
                 order: 2;
             }
 
+            .original-name, .new-name {
+                min-width: 0;
+            }
+
+            .name-text, .rename-input {
+                max-height: 57px; /* 移动端稍微减少高度 */
+                font-size: 0.85em;
+            }
+
             .action-buttons {
                 flex-direction: column;
             }
@@ -460,7 +547,7 @@
             <div class="upload-section" id="uploadSection">
                 <div class="upload-icon">📁</div>
                 <h3>选择图像文件</h3>
-                <p>拖拽文件到此处或点击选择文件</p>
+                <p>点击下方按钮选择文件或文件夹</p>
                 <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
                 <div style="display: flex; gap: 15px; justify-content: center;">
                     <button class="upload-btn" id="selectFilesBtn">
@@ -478,14 +565,22 @@
                 <div class="settings-grid">
                     <div class="setting-group">
                         <label for="apiKey">API 密钥</label>
-                        <input type="password" id="apiKey" placeholder="输入您的 Gemini API 密钥">
+                        <div class="password-input-container">
+                            <input type="password" id="apiKey" placeholder="输入您的 AI API 密钥">
+                            <span class="password-toggle" id="passwordToggle">👁️</span>
+                        </div>
+                        <div class="help-text">
+                            <strong>免费API获取：</strong><br>
+                            • 智谱GLM-4V-Flash: <a href="https://open.bigmodel.cn/" target="_blank">open.bigmodel.cn</a> (完全免费) ⭐<br>
+                            • Gemini 2.0 Flash: <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> (需要科学上网)<br>
+                            • 或开启离线模式无需API密钥
+                        </div>
                     </div>
                     <div class="setting-group">
                         <label for="modelName">模型名称</label>
                         <select id="modelName">
-                            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                            <option value="glm-4v-flash" selected>智谱GLM-4V-Flash (完全免费) ⭐</option>
+                            <option value="gemini-2.0-flash">Gemini 2.0 Flash (需科学上网)</option>
                         </select>
                     </div>
                     <div class="setting-group">
@@ -494,6 +589,14 @@
                             <option value="zh">中文</option>
                             <option value="en">English</option>
                         </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="offlineMode">离线模式</label>
+                        <select id="offlineMode">
+                            <option value="false">关闭</option>
+                            <option value="true">开启</option>
+                        </select>
+                        <div class="help-text">开启后将使用本地算法生成文件名，无需API密钥</div>
                     </div>
                 </div>
             </div>

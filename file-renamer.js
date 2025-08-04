@@ -12,16 +12,16 @@ class FileRenamer {
     try {
       const files = await fs.readdir(dirPath);
       const imageFiles = files.filter(file => this.analyzer.isImageFile(file));
-      
+
       const results = [];
-      
+
       for (const file of imageFiles) {
         const filePath = path.join(dirPath, file);
         try {
           const text = await this.analyzer.extractTextFromImageWithFallback(filePath, language);
           const metadata = await this.analyzer.getImageMetadata(filePath);
           const suggestedName = this.analyzer.generateSuggestedName(text, metadata);
-          
+
           results.push({
             originalPath: filePath,
             originalName: file,
@@ -44,7 +44,7 @@ class FileRenamer {
           });
         }
       }
-      
+
       return results;
     } catch (error) {
       throw new Error(`Failed to scan directory: ${error.message}`);
@@ -60,7 +60,7 @@ class FileRenamer {
     const results = await this.scanDirectory(dirPath, language);
     const successfulRenames = [];
     const failedRenames = [];
-    
+
     for (const item of results) {
       if (item.skipped) {
         continue;
@@ -69,15 +69,15 @@ class FileRenamer {
         failedRenames.push(item);
         continue;
       }
-      
+
       if (!item.wouldRename) {
         continue;
       }
-      
+
       try {
         const oldPath = item.originalPath;
         const newPath = path.join(dirPath, item.suggestedName);
-        
+
         if (dryRun) {
           successfulRenames.push({
             ...item,
@@ -99,7 +99,7 @@ class FileRenamer {
         });
       }
     }
-    
+
     return {
       successful: successfulRenames,
       failed: failedRenames,

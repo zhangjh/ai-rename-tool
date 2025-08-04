@@ -92,7 +92,8 @@ ipcMain.handle('preview-rename', async (event, { files, settings }) => {
       ...config,
       apiKey: settings.apiKey || config.apiKey,
       modelName: settings.modelName || config.modelName,
-      language: settings.language || config.language || 'zh'
+      language: settings.language || config.language || 'zh',
+      offlineMode: settings.offlineMode !== undefined ? settings.offlineMode : config.offlineMode
     };
 
     // 创建重命名器实例
@@ -137,7 +138,8 @@ ipcMain.handle('perform-rename', async (event, { files, settings }) => {
       ...config,
       apiKey: settings.apiKey || config.apiKey,
       modelName: settings.modelName || config.modelName,
-      language: settings.language || config.language || 'zh'
+      language: settings.language || config.language || 'zh',
+      offlineMode: settings.offlineMode !== undefined ? settings.offlineMode : config.offlineMode
     };
 
     // 创建重命名器实例

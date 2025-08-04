@@ -6,6 +6,8 @@
 [![跨平台](https://img.shields.io/badge/平台-Windows%20%7C%20macOS%20%7C%20Linux-green)](https://github.com)
 [![多语言](https://img.shields.io/badge/语言-中文%20%7C%20English-orange)](https://github.com)
 
+### 本项目代码实现均由[Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder)实现，作者主要负责：产品创意、技术架构、技术组件选型、代码Review&微调，本人对Electron 0基础，由Qwen3-Coder辅助完成的第一款桌面端软件👍🏻
+
 ## 🏆 项目亮点
 
 ### 💡 **解决实际问题**
@@ -33,6 +35,7 @@
 - 🔄 **多语言适配**：根据用户选择生成中文或英文文件名
 - 🛡️ **安全可靠**：预览模式确保重命名前可验证结果
 - 🔧 **容错机制**：AI失败时智能降级到规则引擎
+- 🔌 **离线模式**：无需API密钥，使用本地算法生成文件名
 
 ## ✨ 核心功能特性
 
@@ -84,9 +87,14 @@ npm run build
 
 ### ⚙️ 配置设置
 
-1. **获取API密钥**：访问 [Google AI Studio](https://makersuite.google.com/app/apikey) 获取免费API密钥
-2. **配置应用**：在应用设置中输入API密钥和选择模型（桌面工具，仅在本地，无泄漏风险）
-3. **选择语言**：根据需要选择中文或英文文件名生成
+1. **选择模式**：
+   - **在线模式**：需要API密钥，提供AI智能分析
+   - **离线模式**：无需API密钥，使用本地算法生成文件名
+2. **获取API密钥**（在线模式）：
+   - (Google Gemini, 需要科学上网)访问 [Google AI Studio](https://makersuite.google.com/app/apikey) 获取免费API密钥
+   - (智谱GLM-4V-flash, 完全免费)访问[智谱开放平台](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)获取免费API密钥
+3. **配置应用**：在应用设置中输入API密钥和选择模型（桌面工具，仅在本地，无泄漏风险）
+4. **选择语言**：根据需要选择中文或英文文件名生成
 
 ### 🎯 使用流程
 
@@ -162,11 +170,17 @@ scan_doc.tiff → 2025-08-04_contract_agreement_document.tiff
 
 #### 🌍 **多语言支持**
 ```
-中文模式:
+中文模式 (在线):
 IMG_123.jpg → 2025-08-04_咖啡店内部装修风格.jpg
 
-English模式:  
+English模式 (在线):  
 IMG_123.jpg → 2025-08-04_coffee_shop_interior_design.jpg
+
+离线模式 (中文):
+IMG_123.jpg → 2025-08-04_小_图像.jpg
+
+离线模式 (English):
+IMG_123.jpg → 2025-08-04_small_image.jpg
 ```
 
 ### 📊 **性能指标**
@@ -230,7 +244,7 @@ IMG_123.jpg → 2025-08-04_coffee_shop_interior_design.jpg
 - **操作系统**: Windows 10+, macOS 10.14+, Ubuntu 18.04+
 - **内存**: 最低4GB RAM，推荐8GB+
 - **存储**: 100MB安装空间
-- **网络**: 可选，离线模式可用
+- **网络**: 在线模式需要，离线模式无需网络连接
 
 ### 🔧 **支持格式**
 | 格式 | 扩展名 | 支持程度 |
@@ -246,12 +260,14 @@ IMG_123.jpg → 2025-08-04_coffee_shop_interior_design.jpg
 ### 📝 **功能开发计划**
 
 #### 🔥 **近期计划 (v1.1-1.2)**
+- [x] **离线模式支持**: 无需API密钥的本地文件命名算法
 - [ ] **批量撤销功能**: 支持一键撤销整批重命名操作
 - [ ] **自定义命名规则**: 用户可设置文件名格式模板
 - [ ] **重命名历史记录**: 保存操作历史，支持查看和恢复
 - [ ] **文件预览功能**: 在重命名前预览图片缩略图
 - [ ] **快捷键支持**: 添加常用操作的键盘快捷键
 - [ ] **拖拽排序**: 支持手动调整文件处理顺序
+- [ ] **离线模式增强**: 基于文件内容的更智能离线分析
 
 #### 🚀 **中期计划 (v1.3-1.5)**
 - [ ] **多AI模型支持**: 集成Claude、GPT-4V等其他视觉模型
