@@ -18,10 +18,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getConfig: () => ipcRenderer.invoke('get-config'),
   
   // 进度更新
-  onProgress: (callback) => {
-    ipcRenderer.on('progress-update', callback);
+  onPreviewProgress: (callback) => {
+    ipcRenderer.on('preview-progress', callback);
     return () => {
-      ipcRenderer.removeAllListeners('progress-update');
+      ipcRenderer.removeAllListeners('preview-progress');
     };
+  },
+  
+  onRenameProgress: (callback) => {
+    ipcRenderer.on('rename-progress', callback);
+    return () => {
+      ipcRenderer.removeAllListeners('rename-progress');
+    };
+  },
+  
+  // 移除进度监听器
+  removeProgressListeners: () => {
+    ipcRenderer.removeAllListeners('preview-progress');
+    ipcRenderer.removeAllListeners('rename-progress');
   }
 }); 

@@ -370,6 +370,18 @@
             background-color: #fff8f8;
         }
 
+        .rename-input.same-name {
+            border-color: #f39c12;
+            background-color: #fef9e7;
+            color: #d68910;
+        }
+
+        .rename-input.skipped {
+            border-color: #17a2b8;
+            background-color: #e7f7ff;
+            color: #0c5460;
+        }
+
         .action-buttons {
             display: flex;
             gap: 15px;
@@ -404,20 +416,79 @@
             background: #5a6268;
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #e9ecef;
-            border-radius: 3px;
-            overflow: hidden;
+        .progress-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
             margin: 20px 0;
+        }
+
+        .progress-info {
+            margin-bottom: 15px;
+        }
+
+        .progress-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .progress-stats {
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .current-file {
+            font-size: 0.9em;
+            color: #555;
+            font-family: monospace;
+            background: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .progress-bar {
+            position: relative;
+            width: 100%;
+            height: 24px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .progress-fill {
             height: 100%;
-            background: #3498db;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
             width: 0%;
             transition: width 0.3s ease;
+            border-radius: 12px;
+        }
+
+        .progress-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #333;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
         }
 
         .status-message {
@@ -615,9 +686,20 @@
                 </div>
             </div>
 
-            <!-- 进度条 -->
-            <div class="progress-bar hidden" id="progressBar">
-                <div class="progress-fill" id="progressFill"></div>
+            <!-- 进度显示区域 -->
+            <div class="progress-section hidden" id="progressSection">
+                <div class="progress-info">
+                    <div class="progress-text" id="progressText">正在处理...</div>
+                    <div class="progress-details" id="progressDetails">
+                        <span id="progressCurrent">0</span> / <span id="progressTotal">0</span>
+                        <span class="progress-stats" id="progressStats"></span>
+                    </div>
+                    <div class="current-file" id="currentFile">当前文件: </div>
+                </div>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="progress-percentage" id="progressPercentage">0%</div>
+                </div>
             </div>
 
             <!-- 状态消息 -->

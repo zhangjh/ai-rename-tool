@@ -101,26 +101,46 @@ ipcMain.handle('preview-rename', async (event, { files, settings }) => {
 
     // 处理文件
     const results = [];
-    for (const filePath of files) {
+    const totalFiles = files.length;
+    
+    for (let i = 0; i < files.length; i++) {
+      const filePath = files[i];
+      
+      // 发送进度更新
+      const progress = Math.round(((i + 1) / totalFiles) * 100);
+      mainWindow.webContents.send('preview-progress', {
+        current: i + 1,
+        total: totalFiles,
+        progress: progress,
+        currentFile: path.basename(filePath)
+      });
+      
       try {
         const text = await renamer.analyzer.extractTextFromImageWithFallback(filePath, settings.language || 'zh');
         const metadata = await renamer.analyzer.getImageMetadata(filePath);
         const suggestedName = renamer.analyzer.generateSuggestedName(text, metadata);
+        const newFileName = suggestedName + path.extname(filePath);
+        const originalFileName = path.basename(filePath);
+
+        // 检查是否同名
+        const isSameName = originalFileName === newFileName;
 
         results.push({
           originalPath: filePath,
-          originalName: path.basename(filePath),
+          originalName: originalFileName,
           extractedText: text,
           metadata: metadata,
-          suggestedName: suggestedName + path.extname(filePath),
-          wouldRename: true
+          suggestedName: newFileName,
+          wouldRename: !isSameName,
+          isSameName: isSameName
         });
       } catch (error) {
         results.push({
           originalPath: filePath,
           originalName: path.basename(filePath),
           error: error.message,
-          wouldRename: false
+          wouldRename: false,
+          isSameName: false
         });
       }
     }
@@ -131,7 +151,7 @@ ipcMain.handle('preview-rename', async (event, { files, settings }) => {
   }
 });
 
-ipcMain.handle('perform-rename', async (event, { files, settings }) => {
+ipcMain.handle('perform-rename', async (event, { files, settings, previewResults }) => {
   try {
     // 更新配置
     const updatedConfig = {
@@ -147,34 +167,111 @@ ipcMain.handle('perform-rename', async (event, { files, settings }) => {
 
     // 执行重命名
     const results = [];
-    for (const filePath of files) {
+    const totalFiles = files.length;
+    let processedCount = 0;
+    let skippedCount = 0;
+    let successCount = 0;
+    let failedCount = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+      const filePath = files[i];
+      const previewResult = previewResults[i];
+      
+      // 发送进度更新
+      const progress = Math.round(((i + 1) / totalFiles) * 100);
+      mainWindow.webContents.send('rename-progress', {
+        current: i + 1,
+        total: totalFiles,
+        progress: progress,
+        currentFile: path.basename(filePath),
+        processed: processedCount,
+        skipped: skippedCount,
+        success: successCount,
+        failed: failedCount
+      });
+      
       try {
-        const text = await renamer.analyzer.extractTextFromImageWithFallback(filePath, settings.language || 'zh');
-        const metadata = await renamer.analyzer.getImageMetadata(filePath);
-        const suggestedName = renamer.analyzer.generateSuggestedName(text, metadata);
+        // 检查是否需要跳过（同名文件）
+        if (previewResult && previewResult.isSameName) {
+          skippedCount++;
+          results.push({
+            originalPath: filePath,
+            originalName: path.basename(filePath),
+            success: true,
+            skipped: true,
+            reason: '文件名相同，跳过处理'
+          });
+          continue;
+        }
+
+        // 使用预览结果中的建议名称
+        let suggestedName;
+        if (previewResult && previewResult.suggestedName) {
+          suggestedName = previewResult.suggestedName;
+        } else {
+          // 如果没有预览结果，重新分析
+          const text = await renamer.analyzer.extractTextFromImageWithFallback(filePath, settings.language || 'zh');
+          const metadata = await renamer.analyzer.getImageMetadata(filePath);
+          suggestedName = renamer.analyzer.generateSuggestedName(text, metadata) + path.extname(filePath);
+        }
 
         const dir = path.dirname(filePath);
-        const ext = path.extname(filePath);
-        const newPath = path.join(dir, suggestedName + ext);
+        const newPath = path.join(dir, suggestedName);
+
+        // 检查目标文件是否已存在
+        try {
+          await fs.access(newPath);
+          // 文件已存在，跳过
+          skippedCount++;
+          results.push({
+            originalPath: filePath,
+            originalName: path.basename(filePath),
+            success: true,
+            skipped: true,
+            reason: '目标文件已存在，跳过处理'
+          });
+          continue;
+        } catch {
+          // 文件不存在，可以重命名
+        }
 
         // 重命名文件
-        await renamer.renameSingleFile(filePath, suggestedName + ext);
+        await renamer.renameSingleFile(filePath, suggestedName);
+        successCount++;
+        processedCount++;
 
         results.push({
           originalPath: filePath,
           newPath: newPath,
-          success: true
+          originalName: path.basename(filePath),
+          newName: suggestedName,
+          success: true,
+          skipped: false
         });
       } catch (error) {
+        failedCount++;
+        processedCount++;
         results.push({
           originalPath: filePath,
+          originalName: path.basename(filePath),
           error: error.message,
-          success: false
+          success: false,
+          skipped: false
         });
       }
     }
 
-    return { success: true, results };
+    return { 
+      success: true, 
+      results,
+      summary: {
+        total: totalFiles,
+        processed: processedCount,
+        skipped: skippedCount,
+        success: successCount,
+        failed: failedCount
+      }
+    };
   } catch (error) {
     return { success: false, error: error.message };
   }

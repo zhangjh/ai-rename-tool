@@ -16,8 +16,16 @@ const previewSection = document.getElementById('previewSection');
 const previewBtn = document.getElementById('previewBtn');
 const previewLoading = document.getElementById('previewLoading');
 const fileList = document.getElementById('fileList');
+const progressSection = document.getElementById('progressSection');
 const progressBar = document.getElementById('progressBar');
 const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const progressDetails = document.getElementById('progressDetails');
+const progressCurrent = document.getElementById('progressCurrent');
+const progressTotal = document.getElementById('progressTotal');
+const progressStats = document.getElementById('progressStats');
+const currentFile = document.getElementById('currentFile');
+const progressPercentage = document.getElementById('progressPercentage');
 const statusMessage = document.getElementById('statusMessage');
 const actionButtons = document.getElementById('actionButtons');
 const renameBtn = document.getElementById('renameBtn');
@@ -37,7 +45,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // 初始化离线模式状态
   updateOfflineModeUI();
+  
+  // 设置进度监听器
+  setupProgressListeners();
 });
+
+// 设置进度监听器
+function setupProgressListeners() {
+  // 预览进度监听
+  window.electronAPI.onPreviewProgress((event, data) => {
+    updateProgress(data, 'preview');
+  });
+  
+  // 重命名进度监听
+  window.electronAPI.onRenameProgress((event, data) => {
+    updateProgress(data, 'rename');
+  });
+}
 
 // 绑定事件
 function bindEvents() {
@@ -226,11 +250,14 @@ function updateFileListWithPreview() {
     const input = document.getElementById(`rename-${index}`);
     if (input) {
       // 清除之前的样式类
-      input.classList.remove('success', 'error');
+      input.classList.remove('success', 'error', 'same-name');
       
       if (result.error) {
         input.value = `错误: ${result.error}`;
         input.classList.add('error');
+      } else if (result.isSameName) {
+        input.value = `${result.suggestedName} (同名跳过)`;
+        input.classList.add('same-name');
       } else {
         input.value = result.suggestedName;
         input.classList.add('success');
@@ -248,20 +275,23 @@ async function handleRename() {
   
   const settings = getSettings();
   setLoading(true, 'rename');
-  showProgress(0);
+  showProgressSection(true);
   
   try {
     const result = await window.electronAPI.performRename({
       files: selectedFiles,
-      settings: settings
+      settings: settings,
+      previewResults: previewResults
     });
     
     if (result.success) {
-      const successCount = result.results.filter(r => r.success).length;
-      const failCount = result.results.length - successCount;
+      const summary = result.summary;
+      let statusText = `重命名完成！`;
+      if (summary.success > 0) statusText += ` 成功: ${summary.success}`;
+      if (summary.skipped > 0) statusText += ` 跳过: ${summary.skipped}`;
+      if (summary.failed > 0) statusText += ` 失败: ${summary.failed}`;
       
-      showProgress(100);
-      showStatus(`重命名完成！成功: ${successCount}, 失败: ${failCount}`, 'success');
+      showStatus(statusText, 'success');
       
       // 更新文件列表显示结果
       updateFileListWithResults(result.results);
@@ -272,7 +302,9 @@ async function handleRename() {
     showStatus(`重命名失败: ${error.message}`, 'error');
   } finally {
     setLoading(false, 'rename');
-    hideProgress();
+    setTimeout(() => {
+      hideProgressSection();
+    }, 2000); // 2秒后隐藏进度条
   }
 }
 
@@ -282,9 +314,12 @@ function updateFileListWithResults(results) {
     const input = document.getElementById(`rename-${index}`);
     if (input) {
       // 清除之前的样式类
-      input.classList.remove('success', 'error');
+      input.classList.remove('success', 'error', 'same-name', 'skipped');
       
-      if (result.success) {
+      if (result.success && result.skipped) {
+        input.value = `⏭️ ${result.reason}`;
+        input.classList.add('skipped');
+      } else if (result.success) {
         input.value = `✓ 重命名成功`;
         input.classList.add('success');
       } else {
@@ -329,16 +364,61 @@ function showStatus(message, type) {
   }
 }
 
-// 显示进度条
-function showProgress(percent) {
-  progressBar.classList.remove('hidden');
-  progressFill.style.width = `${percent}%`;
+// 显示进度区域
+function showProgressSection(show = true) {
+  if (show) {
+    progressSection.classList.remove('hidden');
+  } else {
+    progressSection.classList.add('hidden');
+  }
 }
 
-// 隐藏进度条
-function hideProgress() {
-  progressBar.classList.add('hidden');
+// 隐藏进度区域
+function hideProgressSection() {
+  progressSection.classList.add('hidden');
   progressFill.style.width = '0%';
+  progressPercentage.textContent = '0%';
+}
+
+// 更新进度显示
+function updateProgress(data, type) {
+  const { current, total, progress, currentFile: fileName } = data;
+  
+  // 更新进度条
+  progressFill.style.width = `${progress}%`;
+  progressPercentage.textContent = `${progress}%`;
+  
+  // 更新进度文字
+  if (type === 'preview') {
+    progressText.textContent = '正在生成预览...';
+  } else if (type === 'rename') {
+    progressText.textContent = '正在重命名文件...';
+    
+    // 显示重命名统计
+    if (data.processed !== undefined) {
+      const statsText = `已处理: ${data.processed}, 跳过: ${data.skipped}, 成功: ${data.success}, 失败: ${data.failed}`;
+      progressStats.textContent = statsText;
+    }
+  }
+  
+  // 更新进度数字
+  progressCurrent.textContent = current;
+  progressTotal.textContent = total;
+  
+  // 更新当前文件
+  currentFile.textContent = `当前文件: ${fileName || '无'}`;
+}
+
+// 显示进度条（兼容旧代码）
+function showProgress(percent) {
+  showProgressSection(true);
+  progressFill.style.width = `${percent}%`;
+  progressPercentage.textContent = `${percent}%`;
+}
+
+// 隐藏进度条（兼容旧代码）
+function hideProgress() {
+  hideProgressSection();
 }
 
 // 切换密钥显示/隐藏
@@ -372,12 +452,19 @@ function resetApp() {
   previewSection.classList.add('hidden');
   actionButtons.classList.add('hidden');
   statusMessage.classList.add('hidden');
-  progressBar.classList.add('hidden');
+  hideProgressSection();
+  
+  // 移除进度监听器
+  window.electronAPI.removeProgressListeners();
+  
+  // 重新设置进度监听器
+  setupProgressListeners();
   
   // 重置输入框
   const inputs = document.querySelectorAll('.rename-input');
   inputs.forEach(input => {
     input.value = '';
     input.style.color = '';
+    input.classList.remove('success', 'error', 'same-name', 'skipped');
   });
 } 
