@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f5;
             min-height: 100vh;
             padding: 20px;
         }
@@ -28,7 +28,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2c3e50;
             color: white;
             padding: 30px;
             text-align: center;
@@ -58,18 +58,18 @@
         }
 
         .upload-section:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #3498db;
+            background: #f8f9fa;
         }
 
         .upload-section.dragover {
-            border-color: #667eea;
-            background: #f0f4ff;
+            border-color: #3498db;
+            background: #e3f2fd;
         }
 
         .upload-icon {
             font-size: 3em;
-            color: #667eea;
+            color: #3498db;
             margin-bottom: 20px;
         }
 
@@ -78,19 +78,18 @@
         }
 
         .upload-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #3498db;
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-size: 1.1em;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1em;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: background-color 0.3s ease;
         }
 
         .upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            background: #2980b9;
         }
 
         .settings-section {
@@ -127,7 +126,7 @@
 
         .setting-group input:focus, .setting-group select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #3498db;
         }
 
         .preview-section {
@@ -172,11 +171,11 @@
 
         .file-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             padding: 15px;
             border-bottom: 1px solid #eee;
             transition: background 0.3s ease;
+            gap: 15px;
         }
 
         .file-item:hover {
@@ -191,11 +190,12 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            min-width: 300px;
         }
 
         .file-icon {
             font-size: 1.5em;
-            color: #667eea;
+            color: #3498db;
         }
 
         .file-details h4 {
@@ -217,22 +217,79 @@
         }
 
         .rename-section {
-            display: flex;
+            flex: 1;
+            min-width: 500px;
+        }
+
+        .name-comparison {
+            display: grid;
+            grid-template-columns: 1fr 40px 1fr;
             gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            align-items: start;
+        }
+
+        .original-name, .new-name {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .original-name label, .new-name label {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+
+        .name-text {
+            padding: 10px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #333;
+            word-break: break-all;
+            min-height: 38px;
+            display: flex;
             align-items: center;
         }
 
+        .arrow {
+            font-size: 1.5em;
+            color: #3498db;
+            font-weight: bold;
+            text-align: center;
+            align-self: center;
+            margin-top: 20px;
+        }
+
         .rename-input {
-            flex: 1;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border: 2px solid #ddd;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 0.9em;
+            width: 100%;
+            min-height: 38px;
+            box-sizing: border-box;
         }
 
         .rename-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #3498db;
+        }
+
+        .rename-input.success {
+            border-color: #27ae60;
+            background-color: #f8fff8;
+        }
+
+        .rename-input.error {
+            border-color: #e74c3c;
+            background-color: #fff8f8;
         }
 
         .action-buttons {
@@ -252,13 +309,12 @@
         }
 
         .rename-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #27ae60;
             color: white;
         }
 
         .rename-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            background: #229954;
         }
 
         .cancel-btn {
@@ -268,7 +324,6 @@
 
         .cancel-btn:hover {
             background: #5a6268;
-            transform: translateY(-2px);
         }
 
         .progress-bar {
@@ -282,7 +337,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #3498db;
             width: 0%;
             transition: width 0.3s ease;
         }
@@ -318,7 +373,7 @@
             width: 20px;
             height: 20px;
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #3498db;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -357,11 +412,34 @@
             .file-item {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
+                gap: 15px;
+            }
+
+            .file-info {
+                min-width: auto;
+                width: 100%;
             }
 
             .rename-section {
                 width: 100%;
+                min-width: auto;
+            }
+
+            .name-comparison {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .arrow {
+                display: none;
+            }
+
+            .original-name {
+                order: 1;
+            }
+
+            .new-name {
+                order: 2;
             }
 
             .action-buttons {
@@ -374,7 +452,7 @@
     <div class="container">
         <div class="header">
             <h1>🖼️ 图像重命名工具</h1>
-            <p>基于 AI 的智能图像文件重命名工具</p>
+            <p>智能图像文件重命名工具</p>
         </div>
 
         <div class="main-content">
@@ -384,9 +462,14 @@
                 <h3>选择图像文件</h3>
                 <p>拖拽文件到此处或点击选择文件</p>
                 <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    选择文件
-                </button>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button class="upload-btn" id="selectFilesBtn">
+                        选择文件
+                    </button>
+                    <button class="upload-btn" id="selectFolderBtn">
+                        选择文件夹
+                    </button>
+                </div>
             </div>
 
             <!-- 设置区域 -->
@@ -406,10 +489,10 @@
                         </select>
                     </div>
                     <div class="setting-group">
-                        <label for="offlineMode">模式</label>
-                        <select id="offlineMode">
-                            <option value="false">在线 AI 模式</option>
-                            <option value="true">离线模式</option>
+                        <label for="language">文件名语言</label>
+                        <select id="language">
+                            <option value="zh">中文</option>
+                            <option value="en">English</option>
                         </select>
                     </div>
                 </div>

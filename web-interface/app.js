@@ -5,9 +5,12 @@ let previewResults = [];
 // DOM 元素
 const uploadSection = document.getElementById('uploadSection');
 const fileInput = document.getElementById('fileInput');
+const selectFilesBtn = document.getElementById('selectFilesBtn');
+const selectFolderBtn = document.getElementById('selectFolderBtn');
 const apiKeyInput = document.getElementById('apiKey');
 const modelNameSelect = document.getElementById('modelName');
-const offlineModeSelect = document.getElementById('offlineMode');
+const languageSelect = document.getElementById('language');
+// 移除离线模式选择器
 const previewSection = document.getElementById('previewSection');
 const previewBtn = document.getElementById('previewBtn');
 const previewLoading = document.getElementById('previewLoading');
@@ -25,7 +28,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const config = await window.electronAPI.getConfig();
   apiKeyInput.value = config.apiKey || '';
   modelNameSelect.value = config.modelName || 'gemini-1.5-flash';
-  offlineModeSelect.value = config.offlineMode ? 'true' : 'false';
+  languageSelect.value = config.language || 'zh';
+  // 移除离线模式配置
   
   // 绑定事件
   bindEvents();
@@ -33,8 +37,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // 绑定事件
 function bindEvents() {
-  // 文件选择
-  uploadSection.addEventListener('click', () => fileInput.click());
+  // 文件选择 - 只在点击上传区域但不是按钮时触发
+  uploadSection.addEventListener('click', (event) => {
+    // 如果点击的是按钮，不触发文件选择
+    if (!event.target.classList.contains('upload-btn')) {
+      fileInput.click();
+    }
+  });
+  
+  // 按钮事件
+  selectFilesBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    fileInput.click();
+  });
+  
+  selectFolderBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    selectDirectory();
+  });
+  
   fileInput.addEventListener('change', handleFileSelect);
   
   // 拖拽上传
@@ -56,6 +77,32 @@ async function handleFileSelect(event) {
     selectedFiles = files.map(file => file.path);
     showPreviewSection();
     renderFileList();
+  }
+}
+
+// 选择文件夹
+async function selectDirectory() {
+  try {
+    // 清除文件输入框状态
+    fileInput.value = '';
+    
+    const directoryPath = await window.electronAPI.selectDirectory();
+    if (directoryPath) {
+      showStatus('正在扫描文件夹...', 'info');
+      
+      // 扫描文件夹中的图像文件
+      const result = await window.electronAPI.scanDirectory(directoryPath);
+      if (result.success && result.files.length > 0) {
+        selectedFiles = result.files;
+        showPreviewSection();
+        renderFileList();
+        showStatus(`找到 ${result.files.length} 个图像文件`, 'success');
+      } else {
+        showStatus('文件夹中没有找到图像文件', 'error');
+      }
+    }
+  } catch (error) {
+    showStatus(`选择文件夹失败: ${error.message}`, 'error');
   }
 }
 
@@ -90,12 +137,24 @@ function showPreviewSection() {
   actionButtons.classList.remove('hidden');
 }
 
+// 获取文件名（跨平台）
+function getFileName(filePath) {
+  return filePath.split(/[/\\]/).pop();
+}
+
+// 获取目录路径（跨平台）
+function getDirPath(filePath) {
+  const parts = filePath.split(/[/\\]/);
+  parts.pop();
+  return parts.join(process.platform === 'win32' ? '\\' : '/');
+}
+
 // 渲染文件列表
 function renderFileList() {
   fileList.innerHTML = '';
   
   selectedFiles.forEach((filePath, index) => {
-    const fileName = filePath.split(/[/\\]/).pop();
+    const fileName = getFileName(filePath);
     const fileItem = document.createElement('div');
     fileItem.className = 'file-item';
     fileItem.innerHTML = `
@@ -103,11 +162,21 @@ function renderFileList() {
         <div class="file-icon">🖼️</div>
         <div class="file-details">
           <h4>${fileName}</h4>
-          <p>${filePath}</p>
+          <p title="${filePath}">${filePath}</p>
         </div>
       </div>
       <div class="rename-section">
-        <input type="text" class="rename-input" id="rename-${index}" placeholder="新文件名将在这里显示">
+        <div class="name-comparison">
+          <div class="original-name">
+            <label>原文件名:</label>
+            <span class="name-text">${fileName}</span>
+          </div>
+          <div class="arrow">→</div>
+          <div class="new-name">
+            <label>新文件名:</label>
+            <input type="text" class="rename-input" id="rename-${index}" placeholder="新文件名将在这里显示">
+          </div>
+        </div>
       </div>
     `;
     fileList.appendChild(fileItem);
@@ -122,8 +191,8 @@ async function handlePreview() {
   }
   
   const settings = getSettings();
-  if (!settings.apiKey && settings.offlineMode === 'false') {
-    showStatus('请输入 API 密钥或选择离线模式', 'error');
+  if (!settings.apiKey) {
+    showStatus('请输入 API 密钥', 'error');
     return;
   }
   
@@ -155,12 +224,15 @@ function updateFileListWithPreview() {
   previewResults.forEach((result, index) => {
     const input = document.getElementById(`rename-${index}`);
     if (input) {
+      // 清除之前的样式类
+      input.classList.remove('success', 'error');
+      
       if (result.error) {
         input.value = `错误: ${result.error}`;
-        input.style.color = '#dc3545';
+        input.classList.add('error');
       } else {
         input.value = result.suggestedName;
-        input.style.color = '#28a745';
+        input.classList.add('success');
       }
     }
   });
@@ -208,12 +280,15 @@ function updateFileListWithResults(results) {
   results.forEach((result, index) => {
     const input = document.getElementById(`rename-${index}`);
     if (input) {
+      // 清除之前的样式类
+      input.classList.remove('success', 'error');
+      
       if (result.success) {
         input.value = `✓ 重命名成功`;
-        input.style.color = '#28a745';
+        input.classList.add('success');
       } else {
         input.value = `✗ 失败: ${result.error}`;
-        input.style.color = '#dc3545';
+        input.classList.add('error');
       }
     }
   });
@@ -224,7 +299,7 @@ function getSettings() {
   return {
     apiKey: apiKeyInput.value,
     modelName: modelNameSelect.value,
-    offlineMode: offlineModeSelect.value
+    language: languageSelect.value
   };
 }
 

@@ -8,7 +8,7 @@ class FileRenamer {
     this.analyzer = new ImageAnalyzer(config);
   }
 
-  async scanDirectory(dirPath) {
+  async scanDirectory(dirPath, language = 'zh') {
     try {
       const files = await fs.readdir(dirPath);
       const imageFiles = files.filter(file => this.analyzer.isImageFile(file));
@@ -18,7 +18,7 @@ class FileRenamer {
       for (const file of imageFiles) {
         const filePath = path.join(dirPath, file);
         try {
-          const text = await this.analyzer.extractTextFromImageWithFallback(filePath);
+          const text = await this.analyzer.extractTextFromImageWithFallback(filePath, language);
           const metadata = await this.analyzer.getImageMetadata(filePath);
           const suggestedName = this.analyzer.generateSuggestedName(text, metadata);
           
@@ -33,7 +33,7 @@ class FileRenamer {
         } catch (error) {
           console.log(chalk.yellow(`⚠ Processing ${file} with fallback: ${error.message}`));
           const metadata = await this.analyzer.getImageMetadata(filePath);
-          const fallbackName = `image_${metadata?.width}x${metadata?.height}_${Date.now()}`;
+          const fallbackName = this.analyzer.generateFallbackName(filePath);
           results.push({
             originalPath: filePath,
             originalName: file,
@@ -51,13 +51,13 @@ class FileRenamer {
     }
   }
 
-  async previewRenaming(dirPath) {
-    const results = await this.scanDirectory(dirPath);
+  async previewRenaming(dirPath, language = 'zh') {
+    const results = await this.scanDirectory(dirPath, language);
     return results.filter(item => !item.error);
   }
 
-  async performRename(dirPath, dryRun = false) {
-    const results = await this.scanDirectory(dirPath);
+  async performRename(dirPath, dryRun = false, language = 'zh') {
+    const results = await this.scanDirectory(dirPath, language);
     const successfulRenames = [];
     const failedRenames = [];
     

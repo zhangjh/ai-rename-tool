@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 文件选择
   selectFiles: () => ipcRenderer.invoke('select-files'),
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
+  scanDirectory: (directoryPath) => ipcRenderer.invoke('scan-directory', directoryPath),
   
   // 重命名操作
   previewRename: (data) => ipcRenderer.invoke('preview-rename', data),

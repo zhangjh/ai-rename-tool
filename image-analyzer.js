@@ -19,7 +19,7 @@ class ImageAnalyzer {
     this.modelName = fullConfig.modelName;
     this.imageQuality = fullConfig.imageQuality;
   }
-  async analyzeImageWithLLM(imagePath) {
+  async analyzeImageWithLLM(imagePath, language = 'zh') {
     try {
       // Read image file directly and convert to base64
       const imageBuffer = readFileSync(imagePath);
@@ -47,8 +47,13 @@ class ImageAnalyzer {
           break;
       }
 
-      // Create analysis prompt
-      const prompt = `Analyze this image and provide a short, descriptive filename in lowercase with underscores. Return only the filename, nothing else. For example: cat_on_windowsill_sunny_day`;
+      // Create analysis prompt based on language
+      let prompt;
+      if (language === 'en') {
+        prompt = `Analyze this image and provide a short, descriptive filename in English using lowercase letters with underscores. Return only the filename, nothing else. For example: cat_on_windowsill_sunny_day`;
+      } else {
+        prompt = `分析这张图片并提供一个简短的、描述性的中文文件名，使用小写字母和下划线。只返回文件名，不要其他内容。例如：窗台上的猫_阳光明媚的一天`;
+      }
 
       // Prepare the image data for Gemini API
       const imagePart = {
@@ -91,7 +96,7 @@ class ImageAnalyzer {
         console.log('Raw API response:', suggestedName);
         
         // Clean and validate the suggested name
-        const cleanName = this.cleanFilename(suggestedName);
+        const cleanName = this.cleanFilename(suggestedName, language);
         console.log('Cleaned name:', cleanName);
         
         // 获取当前日期作为前缀
@@ -165,20 +170,32 @@ class ImageAnalyzer {
   }
 
   generateFallbackName(imagePath) {
-    const stats = statSync(imagePath);
-    const date = new Date(stats.mtime).toISOString().slice(0, 10); // YYYY-MM-DD
-    const timestamp = new Date(stats.mtime).toISOString().slice(0, 19).replace(/[-:T]/g, '');
+    // 使用当前日期而不是文件修改时间，保持一致性
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, '');
     return `${date}_image_${timestamp}`;
   }
 
-  cleanFilename(name) {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s_-]/g, '')
-      .replace(/\s+/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '')
-      .substring(0, 50);
+  cleanFilename(name, language = 'zh') {
+    if (language === 'en') {
+      // English filename cleaning
+      return name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s_-]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '')
+        .substring(0, 50);
+    } else {
+      // Chinese filename cleaning - allow Chinese characters
+      return name
+        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s_-]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '')
+        .substring(0, 30); // Shorter for Chinese characters
+    }
   }
 
   generateSuggestedName(text, metadata) {
@@ -186,16 +203,14 @@ class ImageAnalyzer {
       return this.generateFallbackName('dummy');
     }
     
-    // 获取当前日期作为前缀
-    const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    
     // 如果文本已经包含日期前缀，直接返回
     if (text.match(/^\d{4}-\d{2}-\d{2}_/)) {
       return text;
     }
     
-    // 添加日期前缀
-    return `${date}_${text}`;
+    // 如果没有日期前缀，说明这是从AI分析来的原始文本，不需要再添加前缀
+    // 因为在 analyzeImageWithLLM 中已经添加了日期前缀
+    return text;
   }
 
   isImageFile(filename) {
@@ -203,9 +218,9 @@ class ImageAnalyzer {
     return this.supportedFormats.includes(ext);
   }
 
-  async extractTextFromImageWithFallback(imagePath) {
+  async extractTextFromImageWithFallback(imagePath, language = 'zh') {
     // 使用离线规则分析
-    return await this.analyzeImageWithLLM(imagePath);
+    return await this.analyzeImageWithLLM(imagePath, language);
   }
 }
 

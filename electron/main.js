@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
+const fs = require('fs').promises;
 const { FileRenamer } = require('../file-renamer.js');
 const config = require('../config.js');
 
@@ -66,7 +67,7 @@ ipcMain.handle('select-files', async () => {
       { name: '所有文件', extensions: ['*'] }
     ]
   });
-  
+
   if (!result.canceled) {
     return result.filePaths;
   }
@@ -77,7 +78,7 @@ ipcMain.handle('select-directory', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory']
   });
-  
+
   if (!result.canceled) {
     return result.filePaths[0];
   }
@@ -91,7 +92,7 @@ ipcMain.handle('preview-rename', async (event, { files, settings }) => {
       ...config,
       apiKey: settings.apiKey || config.apiKey,
       modelName: settings.modelName || config.modelName,
-      offlineMode: settings.offlineMode === 'true'
+      language: settings.language || config.language || 'zh'
     };
 
     // 创建重命名器实例
@@ -101,22 +102,22 @@ ipcMain.handle('preview-rename', async (event, { files, settings }) => {
     const results = [];
     for (const filePath of files) {
       try {
-        const text = await renamer.analyzer.extractTextFromImageWithFallback(filePath);
+        const text = await renamer.analyzer.extractTextFromImageWithFallback(filePath, settings.language || 'zh');
         const metadata = await renamer.analyzer.getImageMetadata(filePath);
         const suggestedName = renamer.analyzer.generateSuggestedName(text, metadata);
-        
+
         results.push({
           originalPath: filePath,
-          originalName: filePath.split(/[/\\]/).pop(),
+          originalName: path.basename(filePath),
           extractedText: text,
           metadata: metadata,
-          suggestedName: suggestedName + (filePath.includes('.') ? '.' + filePath.split('.').pop() : ''),
+          suggestedName: suggestedName + path.extname(filePath),
           wouldRename: true
         });
       } catch (error) {
         results.push({
           originalPath: filePath,
-          originalName: filePath.split(/[/\\]/).pop(),
+          originalName: path.basename(filePath),
           error: error.message,
           wouldRename: false
         });
@@ -136,7 +137,7 @@ ipcMain.handle('perform-rename', async (event, { files, settings }) => {
       ...config,
       apiKey: settings.apiKey || config.apiKey,
       modelName: settings.modelName || config.modelName,
-      offlineMode: settings.offlineMode === 'true'
+      language: settings.language || config.language || 'zh'
     };
 
     // 创建重命名器实例
@@ -146,17 +147,17 @@ ipcMain.handle('perform-rename', async (event, { files, settings }) => {
     const results = [];
     for (const filePath of files) {
       try {
-        const text = await renamer.analyzer.extractTextFromImageWithFallback(filePath);
+        const text = await renamer.analyzer.extractTextFromImageWithFallback(filePath, settings.language || 'zh');
         const metadata = await renamer.analyzer.getImageMetadata(filePath);
         const suggestedName = renamer.analyzer.generateSuggestedName(text, metadata);
-        
-        const dir = filePath.substring(0, filePath.lastIndexOf('/') + 1);
-        const ext = filePath.includes('.') ? '.' + filePath.split('.').pop() : '';
-        const newPath = dir + suggestedName + ext;
-        
+
+        const dir = path.dirname(filePath);
+        const ext = path.extname(filePath);
+        const newPath = path.join(dir, suggestedName + ext);
+
         // 重命名文件
         await renamer.renameSingleFile(filePath, suggestedName + ext);
-        
+
         results.push({
           originalPath: filePath,
           newPath: newPath,
@@ -188,4 +189,28 @@ ipcMain.handle('open-file-location', async (event, filePath) => {
 
 ipcMain.handle('get-config', () => {
   return config;
+});
+
+ipcMain.handle('scan-directory', async (event, directoryPath) => {
+  try {
+    const supportedExtensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'];
+    const files = await fs.readdir(directoryPath);
+
+    const imageFiles = [];
+    for (const file of files) {
+      const filePath = path.join(directoryPath, file);
+      const stat = await fs.stat(filePath);
+
+      if (stat.isFile()) {
+        const ext = path.extname(file).toLowerCase();
+        if (supportedExtensions.includes(ext)) {
+          imageFiles.push(filePath);
+        }
+      }
+    }
+
+    return { success: true, files: imageFiles };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 }); 
