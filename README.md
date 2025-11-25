@@ -8,6 +8,12 @@
 
 `# Qwen3 Coder挑战赛 #`
 ### 本项目代码实现均由[Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder)实现，作者主要负责：产品创意、技术架构、技术组件选型、代码Review&微调，本人对Electron 0基础，由Qwen3-Coder辅助完成的第一款桌面端软件👍🏻
+本项目成功获得Qwen3-Coder大赛**最佳贡献奖**三等奖
+
+[https://mp.weixin.qq.com/s/fRDNc9e0E7p7bWUa00Yaxg](https://mp.weixin.qq.com/s/fRDNc9e0E7p7bWUa00Yaxg)
+
+<img width="600" alt="image" src="https://github.com/user-attachments/assets/c6cd70b2-8601-4049-ae51-0b8477d5f09b" />
+
 
 ## 🏆 项目亮点
 
